@@ -1,0 +1,116 @@
+package com.bham.pij.assignments.a1a;
+
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
+
+public class EmailAddressFinder {
+    
+    private static ArrayList<String> emailAddresses;
+    
+    public static Set<String> DomainSet=new HashSet<String>() {{
+		add(".com");
+		add(".ro");
+		add(".jp");
+		add(".uk");
+		add(".net");
+		add(".de");
+	}};
+    
+    public static void main(String[] args) {
+        emailAddresses = new ArrayList<String>();
+        EmailAddressFinder eaf = new EmailAddressFinder();
+        eaf.run();
+        System.out.println("Email addresses found: " + emailAddresses.size());
+    }
+    
+    public void run() {
+        
+        BufferedReader reader = null;
+        
+        try {
+            reader = new BufferedReader(new FileReader("corrupteddb"));
+     
+            String input = "";
+           
+            PrintWriter pw = new PrintWriter("eaf");
+            
+            while ((input = reader.readLine()) != null) {
+                
+                input = input.trim();
+                
+                ArrayList<String> temp = new ArrayList<String>();
+                
+                temp = findEmailAddresses(input);             
+                
+                for (String t: temp) {
+                    emailAddresses.add(t);
+                }                
+            }
+            
+            pw.close();
+            reader.close();
+        }
+        
+        catch(IOException e) {
+            e.printStackTrace();
+        }        
+    }
+    
+    
+    public List<Integer> getAtIndexses(String input){
+    	List<Integer> atIndexes = new LinkedList<Integer>();
+    	int atindex = 0;
+    	while(true) {
+    		atindex = input.indexOf("@", atindex+1);
+    		if(atindex == -1) {
+    			break;
+    			
+    		}else {
+    			atIndexes.add(atindex);
+    		}
+    		
+    	}
+    	return atIndexes;
+    }
+    
+    
+    
+    
+    private List<String> locals = new LinkedList<>();
+    
+    
+    public List<String> getDomains(String input, List<Integer> atIndexes){
+    	List<String> domainIndexes = new LinkedList<String>();
+    	locals.add(input.substring(0, atIndexes.get(0)));
+    	for(int i=0;i<atIndexes.size();i++) {
+    		int begin = atIndexes.get(i);
+    		int end = input.length();
+    		if(i != atIndexes.size()-1) {
+    			end = atIndexes.get(i+1);
+    		}
+    		
+    		String subString = input.substring(begin+1, end);
+    		String tempDomain = null;
+    		for(String domain:EmailAddressFinder.DomainSet) {
+    			int domainIndex = subString.indexOf(domain);
+    			if(domainIndex != -1) {
+    				tempDomain = input.substring(begin+1, begin+1+domainIndex)+domain;
+    				tempDomain = this.cleanDomain(tempDomain);
+    				break;
+    			}
+    		}
+    		domainIndexes.add(tempDomain); 
+    		if(i != atIndexes.size()-1) {
+    			if(tempDomain == null) {
+        			locals.add(subString);
+        		}else {
+        			locals.add(subString.substring(tempDomain.length()));
+        		}
+    		}
